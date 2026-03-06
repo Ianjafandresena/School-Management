@@ -41,4 +41,17 @@ public class JournalDAO {
         }
         return logs;
     }
+
+    /**
+     * Supprime les logs de connexion/déconnexion de plus de 24h.
+     */
+    public void nettoyerAnciensLogsConnection() {
+        String sql = "DELETE FROM journal WHERE (action = 'CONNEXION' OR action = 'DECONNEXION') " +
+                "AND date_action < datetime('now', '-1 day')";
+        try (Statement stmt = getConn().createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            System.err.println("Erreur nettoyage logs : " + e.getMessage());
+        }
+    }
 }

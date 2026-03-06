@@ -324,9 +324,12 @@ public class PanelPaiements extends JPanel {
         cmbEleve.addActionListener(e -> actualiserMontantDefaut.run());
         cmbType.addActionListener(e -> {
             boolean isEcolage = Paiement.TYPE_ECOLAGE.equals(cmbType.getSelectedItem());
-            cmbMois.setEnabled(isEcolage);
-            lblMoisLabel.setForeground(isEcolage ? Color.BLACK : Color.GRAY);
+            cmbMois.setVisible(isEcolage);
+            lblMoisLabel.setVisible(isEcolage);
             actualiserMontantDefaut.run();
+            // Redimensionner le dialogue si nécessaire (selon le layout)
+            dialog.pack();
+            dialog.setSize(580, isEcolage ? 540 : 480);
         });
 
         // Validation en temps réel du montant (rouge si inférieur)
@@ -377,7 +380,8 @@ public class PanelPaiements extends JPanel {
 
         // ─ Boutons
         JPanel bp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnEnreg = UIFactory.boutonSucces("✔ Enregistrer");
+        JButton btnEnreg = UIFactory.boutonSucces("Enregistrer");
+        btnEnreg.setIcon(UIFactory.icone("accounting.svg", 16));
         JButton btnAnnul = UIFactory.boutonSecondaire("Annuler");
         btnAnnul.addActionListener(e -> dialog.dispose());
         btnEnreg.addActionListener(ev -> {
@@ -427,13 +431,18 @@ public class PanelPaiements extends JPanel {
                 // Calculer ce qui a déjà été payé pour ce mois/type
                 double dejaPaye = paiementDAO.getTotalPaye(eleve.getId(), annee, type, mois);
                 if (dejaPaye + montant > montantExige[0] && montantExige[0] > 0) {
-                    JOptionPane.showMessageDialog(dialog,
-                            "Erreur : Le total payé (" + (dejaPaye + montant) + " Ar) dépasserait le montant exigé ("
-                                    + montantExige[0] + " Ar).",
-                            "Dépassement interdit", JOptionPane.ERROR_MESSAGE);
+                    String msg = String.format(
+                            "Erreur : Impossible d'enregistrer ce paiement.\n" +
+                                    "- Montant déjà payé : %,.0f Ar\n" +
+                                    "- Nouveau montant : %,.0f Ar\n" +
+                                    "- Total (%,.0f Ar) dépasserait le montant exigé (%,.0f Ar) pour %s.",
+                            dejaPaye, montant, (dejaPaye + montant), montantExige[0], type);
+
+                    JOptionPane.showMessageDialog(dialog, msg, "Dépassement interdit", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
+                btnEnreg.setEnabled(false); // Éviter double clic
                 Paiement p = new Paiement();
                 p.setEleveId(eleve.getId());
                 p.setClasseId(classe.getId());
@@ -447,6 +456,8 @@ public class PanelPaiements extends JPanel {
                 p.setReference(paiementDAO.genererNumeroRecu(annee));
 
                 paiementDAO.ajouter(p);
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "PAIEMENT", "Saisie de " + p.getMontant()
+                        + " Ar (" + p.getTypePaiement() + ") pour " + eleve.getNomComplet());
                 rafraichir();
                 dialog.dispose();
 
@@ -505,7 +516,8 @@ public class PanelPaiements extends JPanel {
                         "\n      Signature : ___________________");
 
         JPanel bp = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton btnImpr = UIFactory.boutonPrincipal("🖨 Imprimer");
+        JButton btnImpr = UIFactory.boutonPrincipal("Imprimer");
+        btnImpr.setIcon(UIFactory.icone("print.svg", 16));
         JButton btnFerm = UIFactory.boutonSecondaire("Fermer");
         btnImpr.addActionListener(e -> {
             try {
@@ -553,7 +565,8 @@ public class PanelPaiements extends JPanel {
         top.setOpaque(false);
         JComboBox<String> cmbMoisImp = new JComboBox<>(Paiement.MOIS_ECOLAGE);
         cmbMoisImp.setSelectedItem(obtenirMoisActuel());
-        JButton btnRech = UIFactory.boutonPrincipal("🔍 Rechercher");
+        JButton btnRech = UIFactory.boutonPrincipal("Rechercher");
+        btnRech.setIcon(UIFactory.icone("search.svg", 16));
         top.add(UIFactory.label("Mois :"));
         top.add(cmbMoisImp);
         top.add(btnRech);
@@ -611,6 +624,8 @@ public class PanelPaiements extends JPanel {
         if (rep == JOptionPane.YES_OPTION) {
             try {
                 paiementDAO.supprimer(p.getId());
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "SUPPRESSION PAIEMENT",
+                        "Suppression paiement " + p.getReference() + " de " + p.getMontant() + " Ar");
                 rafraichir();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);

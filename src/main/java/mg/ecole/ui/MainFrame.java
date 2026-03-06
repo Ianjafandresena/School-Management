@@ -118,25 +118,28 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel creerSidebar() {
-        JPanel sidebar = new JPanel();
+        JPanel sidebar = new JPanel(new BorderLayout());
         sidebar.setBackground(Constantes.COULEUR_FOND_SIDEBAR);
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setPreferredSize(new Dimension(240, 0));
 
-        // Logo
+        // --- PARTIE HAUTE (Logo + Titre) ---
+        JPanel pnlHaut = new JPanel();
+        pnlHaut.setLayout(new BoxLayout(pnlHaut, BoxLayout.Y_AXIS));
+        pnlHaut.setOpaque(false);
+
         try {
             ImageIcon logoIcon = UIFactory.iconeImage("wavolution.png", 64);
             JLabel logoLabel = new JLabel(logoIcon);
             logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             logoLabel.setBorder(new EmptyBorder(25, 0, 10, 0));
-            sidebar.add(logoLabel);
+            pnlHaut.add(logoLabel);
         } catch (Exception e) {
             JLabel logoLabel = new JLabel("📚 ECOLE", SwingConstants.CENTER);
             logoLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
             logoLabel.setForeground(Color.WHITE);
             logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             logoLabel.setBorder(new EmptyBorder(25, 0, 10, 0));
-            sidebar.add(logoLabel);
+            pnlHaut.add(logoLabel);
         }
 
         JLabel titleLabel = new JLabel("Menu Principal");
@@ -144,40 +147,56 @@ public class MainFrame extends JFrame {
         titleLabel.setForeground(new Color(0x7F, 0x84, 0xBE));
         titleLabel.setBorder(new EmptyBorder(5, 20, 15, 20));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        sidebar.add(titleLabel);
+        pnlHaut.add(titleLabel);
+        pnlHaut.add(creerSeparateur());
 
-        sidebar.add(creerSeparateur());
-        sidebar.add(Box.createVerticalStrut(10));
+        sidebar.add(pnlHaut, BorderLayout.NORTH);
 
-        sidebar.add(creerBoutonNav("Accueil", "ACCUEIL", "home.svg"));
-        sidebar.add(creerBoutonNav("Élèves", "ELEVES", "students.svg"));
-        sidebar.add(creerBoutonNav("Classes", "CLASSES", "classes.svg"));
-        sidebar.add(creerBoutonNav("Niveaux", "NIVEAUX", "levels.svg"));
-        sidebar.add(creerBoutonNav("Enseignants", "ENSEIGNANTS", "teachers.svg"));
+        // --- PARTIE CENTRALE (Navigation scrollable) ---
+        JPanel pnlNav = new JPanel();
+        pnlNav.setLayout(new BoxLayout(pnlNav, BoxLayout.Y_AXIS));
+        pnlNav.setOpaque(false);
 
-        sidebar.add(creerSeparateur());
-        sidebar.add(creerSectionLabel("FINANCES"));
-        sidebar.add(creerBoutonNav("Paiements", "PAIEMENTS", "payments.svg"));
-        sidebar.add(creerBoutonNav("Comptabilité", "COMPTA", "accounting.svg"));
+        pnlNav.add(Box.createVerticalStrut(10));
+        pnlNav.add(creerBoutonNav("Accueil", "ACCUEIL", "home.svg"));
+        pnlNav.add(creerBoutonNav("Élèves", "ELEVES", "students.svg"));
+        pnlNav.add(creerBoutonNav("Classes", "CLASSES", "classes.svg"));
+        pnlNav.add(creerBoutonNav("Niveaux", "NIVEAUX", "levels.svg"));
+        pnlNav.add(creerBoutonNav("Enseignants", "ENSEIGNANTS", "teachers.svg"));
 
-        sidebar.add(creerSeparateur());
-        sidebar.add(creerSectionLabel("ANALYSE & CONFIG"));
-        sidebar.add(creerBoutonNav("Statistiques", "STATS", "stats.svg"));
-        sidebar.add(creerBoutonNav("Frais Scolaires", "FRAIS", "settings.svg"));
-        sidebar.add(creerBoutonNav("Journal", "JOURNAL", "journal.svg"));
-        sidebar.add(creerBoutonNav("Paramètres", "PARAMS", "settings.svg"));
+        pnlNav.add(creerSeparateur());
+        pnlNav.add(creerSectionLabel("FINANCES"));
+        pnlNav.add(creerBoutonNav("Paiements", "PAIEMENTS", "payments.svg"));
+        pnlNav.add(creerBoutonNav("Comptabilité", "COMPTA", "accounting.svg"));
 
-        sidebar.add(Box.createVerticalGlue());
+        pnlNav.add(creerSeparateur());
+        pnlNav.add(creerSectionLabel("ANALYSE & CONFIG"));
+        pnlNav.add(creerBoutonNav("Statistiques", "STATS", "stats.svg"));
+        pnlNav.add(creerBoutonNav("Frais Scolaires", "FRAIS", "settings.svg"));
+        pnlNav.add(creerBoutonNav("Journal", "JOURNAL", "journal.svg"));
+        pnlNav.add(creerBoutonNav("Paramètres", "PARAMS", "settings.svg"));
+        pnlNav.add(Box.createVerticalGlue());
 
-        lblUser = new JLabel("👤 Connecté...");
+        JScrollPane scrollNav = new JScrollPane(pnlNav);
+        scrollNav.setOpaque(false);
+        scrollNav.getViewport().setOpaque(false);
+        scrollNav.setBorder(null);
+        scrollNav.getVerticalScrollBar().setUnitIncrement(14);
+        scrollNav.getVerticalScrollBar().setPreferredSize(new Dimension(4, 0));
+        sidebar.add(scrollNav, BorderLayout.CENTER);
+
+        // --- PARTIE BASSE (User + Quit + Copyright) ---
+        JPanel pnlBas = new JPanel();
+        pnlBas.setLayout(new BoxLayout(pnlBas, BoxLayout.Y_AXIS));
+        pnlBas.setOpaque(false);
+
+        lblUser = new JLabel("👤 Connecté : " + currentUser);
         lblUser.setFont(new Font("Segoe UI", Font.ITALIC, 11));
         lblUser.setForeground(new Color(0xA0, 0xAA, 0xC0));
         lblUser.setBorder(new EmptyBorder(10, 20, 10, 20));
-        sidebar.add(lblUser);
+        pnlBas.add(lblUser);
 
-        sidebar.add(lblUser);
-
-        sidebar.add(creerSeparateur());
+        pnlBas.add(creerSeparateur());
         JButton btnQuit = new JButton("Quitter");
         btnQuit.setIcon(UIFactory.icone("exit.svg", 18));
         btnQuit.setIconTextGap(12);
@@ -193,8 +212,22 @@ public class MainFrame extends JFrame {
         btnQuit.setMaximumSize(new Dimension(240, 50));
         btnQuit.addActionListener(
                 e -> dispatchEvent(new java.awt.event.WindowEvent(this, java.awt.event.WindowEvent.WINDOW_CLOSING)));
-        sidebar.add(btnQuit);
-        sidebar.add(Box.createVerticalStrut(8));
+        pnlBas.add(btnQuit);
+        pnlBas.add(Box.createVerticalStrut(12));
+
+        JLabel lblCopyright = new JLabel("© 2026 - WavOlution");
+        lblCopyright.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        lblCopyright.setForeground(new Color(0x7F, 0x84, 0xBE, 200));
+        lblCopyright.setBorder(new EmptyBorder(0, 20, 0, 20));
+        pnlBas.add(lblCopyright);
+
+        JLabel lblRights = new JLabel("Tous droits réservés. mon copirght.");
+        lblRights.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+        lblRights.setForeground(new Color(0x7F, 0x84, 0xBE, 180));
+        lblRights.setBorder(new EmptyBorder(2, 20, 15, 20));
+        pnlBas.add(lblRights);
+
+        sidebar.add(pnlBas, BorderLayout.SOUTH);
 
         return sidebar;
     }

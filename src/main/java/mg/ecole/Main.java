@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import mg.ecole.database.DatabaseInitializer;
 import mg.ecole.dao.UtilisateurDAO;
 import mg.ecole.ui.DialogLogin;
+import mg.ecole.ui.DialogSetup;
 import mg.ecole.ui.MainFrame;
 
 import javax.swing.*;
@@ -22,23 +23,44 @@ public class Main {
 
         // 1. Initialiser la base de données
         DatabaseInitializer.initialiserSiNecessaire();
-
-        // 2. Afficher Splash Screen (facultatif ici pour simplifier)
         System.out.println("Base de données initialisée.");
 
-        // 3. Authentification
+        // 2. Authentification
         SwingUtilities.invokeLater(() -> {
             UtilisateurDAO userDAO = new UtilisateurDAO();
-            DialogLogin loginDlg = new DialogLogin(null, userDAO);
-            loginDlg.setVisible(true);
 
-            if (loginDlg.isSuccess()) {
-                // 4. Lancer l'application principale si auth réussie
-                MainFrame frame = new MainFrame();
-                frame.setUserSession(loginDlg.getUserLogin(), loginDlg.getUserRole());
-                frame.setVisible(true);
+            // Vérifier si c'est le premier lancement
+            boolean firstLaunch = false;
+            try {
+                firstLaunch = userDAO.isFirstLaunch();
+            } catch (Exception ignore) {
+            }
+
+            if (firstLaunch) {
+                // Afficher l'assistant de configuration
+                DialogSetup setupDlg = new DialogSetup(null, userDAO);
+                setupDlg.setVisible(true);
+
+                if (setupDlg.isCompleted()) {
+                    // L'utilisateur a créé son compte, le connecter directement
+                    MainFrame frame = new MainFrame();
+                    frame.setUserSession(setupDlg.getCreatedLogin(), setupDlg.getCreatedRole());
+                    frame.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
             } else {
-                System.exit(0);
+                // Lancement normal avec login
+                DialogLogin loginDlg = new DialogLogin(null, userDAO);
+                loginDlg.setVisible(true);
+
+                if (loginDlg.isSuccess()) {
+                    MainFrame frame = new MainFrame();
+                    frame.setUserSession(loginDlg.getUserLogin(), loginDlg.getUserRole());
+                    frame.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
             }
         });
     }

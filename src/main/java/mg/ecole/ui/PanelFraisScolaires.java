@@ -55,6 +55,7 @@ public class PanelFraisScolaires extends JPanel {
         }
 
         JButton btnEnregistrer = UIFactory.boutonSucces("Enregistrer les tarifs");
+        btnEnregistrer.setIcon(UIFactory.icone("accounting.svg", 16));
         btnEnregistrer.addActionListener(e -> enregistrer());
 
         controls.add(UIFactory.label("Année scolaire :"));

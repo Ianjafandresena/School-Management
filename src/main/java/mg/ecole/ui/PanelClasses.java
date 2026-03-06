@@ -51,7 +51,7 @@ public class PanelClasses extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 14, 0));
-        headerPanel.add(UIFactory.labelTitre("Gestion des Classes", "classe.svg"), BorderLayout.WEST);
+        headerPanel.add(UIFactory.labelTitre("Gestion des Classes", "classes.svg"), BorderLayout.WEST);
         JButton btnAjouter = UIFactory.boutonPrincipal("Ajouter");
         btnAjouter.setIcon(UIFactory.icone("plus.svg", 16));
         btnAjouter.addActionListener(e -> dialogClasse(null));
@@ -120,7 +120,7 @@ public class PanelClasses extends JPanel {
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
         btnPanel.setOpaque(false);
         JButton btnVoirEleves = UIFactory.boutonSecondaire("Voir les élèves");
-        btnVoirEleves.setIcon(UIFactory.icone("eleve.svg", 16));
+        btnVoirEleves.setIcon(UIFactory.icone("students.svg", 16));
         JButton btnModifier = UIFactory.boutonSecondaire("Modifier");
         btnModifier.setIcon(UIFactory.icone("edit.svg", 16));
         JButton btnSupprimer = UIFactory.boutonDanger("Supprimer");
@@ -301,10 +301,15 @@ public class PanelClasses extends JPanel {
                 c.setEnseignantId(enseignantId);
                 c.setCapaciteMax((Integer) spnCap.getValue());
                 c.setDescription(txtDescF.getText().trim());
-                if (isEdit)
+                if (isEdit) {
                     classeDAO.modifier(c);
-                else
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "MODIFICATION CLASSE",
+                            "Mise à jour de la classe " + c.getNom());
+                } else {
                     classeDAO.ajouter(c);
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "NOUVELLE CLASSE",
+                            "Création de la classe " + c.getNom());
+                }
                 rafraichir();
                 dialog.dispose();
             } catch (SQLException ex) {
@@ -329,6 +334,8 @@ public class PanelClasses extends JPanel {
         if (rep == JOptionPane.YES_OPTION) {
             try {
                 classeDAO.supprimer(c.getId());
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "SUPPRESSION CLASSE",
+                        "Suppression de la classe " + c.getNom());
                 rafraichir();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);

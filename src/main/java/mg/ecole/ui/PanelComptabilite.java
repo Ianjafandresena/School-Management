@@ -22,7 +22,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,10 +71,13 @@ public class PanelComptabilite extends JPanel {
         JButton btnActualiser = UIFactory.boutonPrincipal("Actualiser");
         btnActualiser.setIcon(UIFactory.icone("refresh.svg", 16));
         JButton btnExport = UIFactory.boutonSecondaire("Export Excel");
-        btnExport.setIcon(UIFactory.icone("export.svg", 16));
+        btnExport.setIcon(UIFactory.icone("accounting.svg", 16));
 
         btnActualiser.addActionListener(e -> rafraichir());
-        btnExport.addActionListener(e -> exportExcel());
+        btnExport.addActionListener(e -> {
+            exportExcel();
+            mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "EXPORT", "Exportation du tableau de recettes");
+        });
 
         btnPanel.add(UIFactory.label("Année scolaire :"));
         btnPanel.add(cmbAnnee);
@@ -255,15 +257,15 @@ public class PanelComptabilite extends JPanel {
                 if (!isSelected) {
                     if (label.startsWith("Total") || label.equals("Total général")) {
                         c.setFont(c.getFont().deriveFont(java.awt.Font.BOLD));
-                        c.setBackground(new Color(0x38, 0x3E, 0x48));
-                        c.setForeground(Color.WHITE);
+                        c.setBackground(new java.awt.Color(0x38, 0x3E, 0x48));
+                        c.setForeground(java.awt.Color.WHITE);
                     } else {
-                        c.setBackground(new Color(0x2D, 0x32, 0x3B));
-                        c.setForeground(new Color(0xD1, 0xD5, 0xDB));
+                        c.setBackground(new java.awt.Color(0x2D, 0x32, 0x3B));
+                        c.setForeground(new java.awt.Color(0xD1, 0xD5, 0xDB));
                     }
                     // Alternance
                     if (column >= 2 && column < table.getColumnCount() - 2 && column % 2 != 0) {
-                        c.setBackground(new Color(0x32, 0x38, 0x43));
+                        c.setBackground(new java.awt.Color(0x32, 0x38, 0x43));
                     }
                 }
                 return c;
@@ -377,10 +379,21 @@ public class PanelComptabilite extends JPanel {
             sheet.addMergedRegion(new CellRangeAddress(0, 1, col + 1, col + 1));
 
             // --- Données ---
+            int startEcolage = -1;
+            int lastEcolage = -1;
+
             for (int r = 0; r < tableModel.getRowCount(); r++) {
                 Row excelRow = sheet.createRow(r + 2);
+                Object catObj = tableModel.getValueAt(r, 0);
+                String cat = catObj != null ? catObj.toString() : "";
                 String label = tableModel.getValueAt(r, 1).toString();
                 boolean isTotal = label.startsWith("Total");
+
+                if ("ECOLAGE".equals(cat) && !isTotal) {
+                    if (startEcolage == -1)
+                        startEcolage = r + 2;
+                    lastEcolage = r + 2;
+                }
 
                 for (int c = 0; c < tableModel.getColumnCount(); c++) {
                     Cell cell = excelRow.createCell(c);
@@ -389,13 +402,22 @@ public class PanelComptabilite extends JPanel {
                         cell.setCellValue(((Number) val).doubleValue());
                         cell.setCellStyle(isTotal ? styleBold : styleCurrency);
                     } else {
-                        cell.setCellValue(val != null ? val.toString() : "");
+                        String sVal = val != null ? val.toString() : "";
+                        if (c == 0 && "ECOLAGE".equals(cat) && !isTotal && r + 2 > startEcolage) {
+                            sVal = "";
+                        }
+                        cell.setCellValue(sVal);
+
                         CellStyle s = workbook.createCellStyle();
                         s.cloneStyleFrom(isTotal ? styleBold : styleHeader);
                         s.setAlignment(HorizontalAlignment.LEFT);
                         cell.setCellStyle(s);
                     }
                 }
+            }
+
+            if (startEcolage != -1 && lastEcolage > startEcolage) {
+                sheet.addMergedRegion(new CellRangeAddress(startEcolage, lastEcolage, 0, 0));
             }
 
             for (int i = 0; i < tableModel.getColumnCount(); i++)

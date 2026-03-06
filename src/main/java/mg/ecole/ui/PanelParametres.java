@@ -16,6 +16,7 @@ import java.util.List;
 public class PanelParametres extends JPanel {
 
     private final AnneeScolaireDAO anneeDAO;
+    private final MainFrame mainFrame; // Added to access JournalDAO
 
     // Champs école
     private final JTextField txtNomEcole;
@@ -26,13 +27,14 @@ public class PanelParametres extends JPanel {
     private final JList<AnneeScolaire> listAnnees;
 
     public PanelParametres(MainFrame mainFrame, AnneeScolaireDAO anneeDAO) {
+        this.mainFrame = mainFrame; // Initialize mainFrame
         this.anneeDAO = anneeDAO;
 
         setLayout(new BorderLayout(0, 0));
         setBorder(new EmptyBorder(16, 22, 16, 22));
 
         // En-tête
-        add(UIFactory.labelTitre("⚙ Paramètres Système"), BorderLayout.NORTH);
+        add(UIFactory.labelTitre("Paramètres Système", "settings.svg"), BorderLayout.NORTH);
 
         JPanel content = new JPanel(new GridLayout(1, 2, 20, 0));
         content.setOpaque(false);
@@ -64,6 +66,7 @@ public class PanelParametres extends JPanel {
         pnlGauche.add(txtDevise, gbc);
 
         JButton btnSaveParam = UIFactory.boutonPrincipal("Enregistrer");
+        btnSaveParam.setIcon(UIFactory.icone("accounting.svg", 16));
         btnSaveParam.addActionListener(e -> enregistrerParametres());
         gbc.gridx = 1;
         gbc.gridy = 2;
@@ -99,8 +102,10 @@ public class PanelParametres extends JPanel {
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.setOpaque(false);
-        JButton btnAjoutAnnee = UIFactory.boutonPrincipal("+ Nouvelle");
+        JButton btnAjoutAnnee = UIFactory.boutonPrincipal("Nouvelle");
+        btnAjoutAnnee.setIcon(UIFactory.icone("plus.svg", 16));
         JButton btnActiveAnnee = UIFactory.boutonSucces("Activer");
+        btnActiveAnnee.setIcon(UIFactory.icone("check.svg", 16)); // Changed icon to check.svg
         btnAjoutAnnee.addActionListener(e -> ajouterAnnee());
         btnActiveAnnee.addActionListener(e -> activerAnnee());
         btnPanel.add(btnActiveAnnee);
@@ -123,6 +128,8 @@ public class PanelParametres extends JPanel {
                 listModel.addElement(a);
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erreur parametres : " + e.getMessage());
+            mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "ERREUR",
+                    "Erreur lors du rafraîchissement des paramètres: " + e.getMessage());
         }
     }
 
@@ -130,9 +137,12 @@ public class PanelParametres extends JPanel {
         try {
             anneeDAO.majParametre("nom_ecole", txtNomEcole.getText().trim());
             anneeDAO.majParametre("devise", txtDevise.getText().trim());
+            mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "PARAMS", "Mise à jour des paramètres système");
             JOptionPane.showMessageDialog(this, "Paramètres mis à jour !");
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erreur : " + e.getMessage());
+            mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "ERREUR",
+                    "Erreur lors de l'enregistrement des paramètres: " + e.getMessage());
         }
     }
 
@@ -144,24 +154,53 @@ public class PanelParametres extends JPanel {
         }
         try {
             anneeDAO.activer(selected.getId());
+            mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "ANNEE ACTIVE",
+                    "Activation de l'année scolaire " + selected.getLibelle());
             rafraichir();
             JOptionPane.showMessageDialog(this, "L'année " + selected.getLibelle() + " est maintenant l'année active.");
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erreur : " + e.getMessage());
+            mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "ERREUR",
+                    "Erreur lors de l'activation de l'année scolaire " + selected.getLibelle() + ": " + e.getMessage());
         }
     }
 
     private void ajouterAnnee() {
-        String libelle = JOptionPane.showInputDialog(this, "Saisissez le libellé de l'année (ex: 2026-2027) :");
-        if (libelle != null && !libelle.trim().isEmpty()) {
+        JPanel pnl = new JPanel(new GridLayout(3, 2, 10, 10));
+        pnl.setOpaque(false);
+
+        JTextField txtLib = UIFactory.champTexte(10);
+        String[] mois = { "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DECEMBRE", "JANVIER", "FEVRIER", "MARS", "AVRIL", "MAI",
+                "JUIN", "JUILLET", "AOUT" };
+        JComboBox<String> cmbDebut = new JComboBox<>(mois);
+        JComboBox<String> cmbFin = new JComboBox<>(mois);
+        cmbFin.setSelectedItem("JUIN");
+
+        pnl.add(UIFactory.label("Libellé (ex: 2026-2027) :"));
+        pnl.add(txtLib);
+        pnl.add(UIFactory.label("Mois de début :"));
+        pnl.add(cmbDebut);
+        pnl.add(UIFactory.label("Mois de fin :"));
+        pnl.add(cmbFin);
+
+        int res = JOptionPane.showConfirmDialog(this, pnl, "Nouvelle Année Scolaire", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
+
+        if (res == JOptionPane.OK_OPTION && !txtLib.getText().trim().isEmpty()) {
             AnneeScolaire a = new AnneeScolaire();
-            a.setLibelle(libelle.trim());
+            a.setLibelle(txtLib.getText().trim());
+            a.setDateDebut((String) cmbDebut.getSelectedItem());
+            a.setDateFin((String) cmbFin.getSelectedItem());
             a.setActive(false);
             try {
                 anneeDAO.ajouter(a);
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "NOUVELLE ANNEE",
+                        "Création de l'année scolaire " + a.getLibelle());
                 rafraichir();
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(this, "Erreur : " + e.getMessage());
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "ERREUR",
+                        "Erreur lors de l'ajout de l'année scolaire " + a.getLibelle() + ": " + e.getMessage());
             }
         }
     }

@@ -76,21 +76,21 @@ public class PanelAccueil extends JPanel {
                 " Accès rapides "));
 
         JButton btnAjouterEleve = UIFactory.boutonPrincipal("Nouvel élève");
-        btnAjouterEleve.setIcon(UIFactory.icone("plus.svg", 20));
-        btnAjouterEleve.setPreferredSize(new Dimension(180, 45));
-        btnAjouterEleve.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAjouterEleve.setIcon(UIFactory.icone("plus.svg", 24));
+        btnAjouterEleve.setPreferredSize(new Dimension(240, 70));
+        btnAjouterEleve.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnAjouterEleve.addActionListener(e -> mainFrame.naviguerVers("ELEVES"));
 
         JButton btnAjouterClasse = UIFactory.boutonSucces("Nouvelle classe");
-        btnAjouterClasse.setIcon(UIFactory.icone("plus.svg", 20));
-        btnAjouterClasse.setPreferredSize(new Dimension(180, 45));
-        btnAjouterClasse.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAjouterClasse.setIcon(UIFactory.icone("plus.svg", 24));
+        btnAjouterClasse.setPreferredSize(new Dimension(240, 70));
+        btnAjouterClasse.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnAjouterClasse.addActionListener(e -> mainFrame.naviguerVers("CLASSES"));
 
         JButton btnAjouterEnseignant = UIFactory.boutonSecondaire("Nouvel enseignant");
-        btnAjouterEnseignant.setIcon(UIFactory.icone("plus.svg", 20));
-        btnAjouterEnseignant.setPreferredSize(new Dimension(180, 45));
-        btnAjouterEnseignant.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAjouterEnseignant.setIcon(UIFactory.icone("plus.svg", 24));
+        btnAjouterEnseignant.setPreferredSize(new Dimension(240, 70));
+        btnAjouterEnseignant.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnAjouterEnseignant.addActionListener(e -> mainFrame.naviguerVers("ENSEIGNANTS"));
 
         raccourcisPanel.add(btnAjouterEleve);

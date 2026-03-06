@@ -26,7 +26,7 @@ public class PanelJournal extends JPanel {
         setBorder(new EmptyBorder(16, 22, 16, 22));
 
         // En-tête
-        add(UIFactory.labelTitre("📜 Journal des Actions"), BorderLayout.NORTH);
+        add(UIFactory.labelTitre("Journal des Actions", "journal.svg"), BorderLayout.NORTH);
 
         // Tableau
         tableModel = new DefaultTableModel(new String[] {
@@ -45,6 +45,7 @@ public class PanelJournal extends JPanel {
 
     public void rafraichir() {
         try {
+            journalDAO.nettoyerAnciensLogsConnection();
             tableModel.setRowCount(0);
             List<String[]> logs = journalDAO.listerDernieresActions(200);
             for (String[] l : logs)

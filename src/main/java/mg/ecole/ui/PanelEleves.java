@@ -54,7 +54,7 @@ public class PanelEleves extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 14, 0));
-        headerPanel.add(UIFactory.labelTitre("Gestion des Élèves", "eleve.svg"), BorderLayout.WEST);
+        headerPanel.add(UIFactory.labelTitre("Gestion des Élèves", "students.svg"), BorderLayout.WEST);
         JPanel btnHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         btnHeader.setOpaque(false);
         JButton btnAjouter = UIFactory.boutonPrincipal("Ajouter");
@@ -404,9 +404,13 @@ public class PanelEleves extends JPanel {
 
                 if (isEdit) {
                     eleveDAO.modifier(el);
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "MODIFICATION ELEVE",
+                            "Saisie mise à jour pour " + el.getNomComplet());
                 } else {
                     el.setDateCreation(LocalDate.now().toString());
                     int newId = eleveDAO.ajouter(el);
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "NOUVEL ELEVE",
+                            "Enregistrement de " + el.getNomComplet());
                     if (cmbClasseAdd.getSelectedIndex() >= 0 && classesDisponibles != null) {
                         Classe c = classesDisponibles.get(cmbClasseAdd.getSelectedIndex());
                         eleveDAO.affecterClasse(newId, c.getId(), mainFrame.getAnneeScolaireActuelle());
@@ -546,6 +550,8 @@ public class PanelEleves extends JPanel {
         if (rep == JOptionPane.YES_OPTION) {
             try {
                 eleveDAO.supprimer(e.getId());
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "SUPPRESSION ELEVE",
+                        "Suppression de " + e.getNomComplet());
                 rafraichir();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);

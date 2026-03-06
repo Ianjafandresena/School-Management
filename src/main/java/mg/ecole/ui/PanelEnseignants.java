@@ -41,7 +41,7 @@ public class PanelEnseignants extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(0, 0, 14, 0));
-        headerPanel.add(UIFactory.labelTitre("Gestion des Enseignants", "enseignant.svg"), BorderLayout.WEST);
+        headerPanel.add(UIFactory.labelTitre("Gestion des Enseignants", "teachers.svg"), BorderLayout.WEST);
         JButton btnAjouter = UIFactory.boutonPrincipal("Ajouter");
         btnAjouter.setIcon(UIFactory.icone("plus.svg", 16));
         btnAjouter.addActionListener(e -> dialogEnseignant(null));
@@ -237,8 +237,12 @@ public class PanelEnseignants extends JPanel {
 
                 if (isEdit) {
                     enseignantDAO.modifier(e);
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "MODIF ENSEIGNANT",
+                            "Mise à jour pour " + e.getNomComplet());
                 } else {
                     enseignantDAO.ajouter(e);
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "NOUVEL ENSEIGNANT",
+                            "Embauche de " + e.getNomComplet());
                 }
                 rafraichir();
                 dialog.dispose();
@@ -264,6 +268,8 @@ public class PanelEnseignants extends JPanel {
         if (rep == JOptionPane.YES_OPTION) {
             try {
                 enseignantDAO.supprimer(e.getId());
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "SUPPR ENSEIGNANT",
+                        "Suppression de " + e.getNomComplet());
                 rafraichir();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erreur : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);

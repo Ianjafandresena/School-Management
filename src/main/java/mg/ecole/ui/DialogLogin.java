@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.prefs.Preferences;
 
 /**
  * Boîte de dialogue de connexion redessinée avec un style premium.
@@ -17,9 +18,13 @@ public class DialogLogin extends JDialog {
     private final UtilisateurDAO dao;
     private final JTextField txtLogin;
     private final JPasswordField txtPass;
+    private final JCheckBox chkRemember;
     private boolean success = false;
     private String userRole = "";
     private String userLogin = "";
+
+    private static final String PREF_USER = "last_user";
+    private static final String PREF_REMEMBER = "remember_me";
 
     public DialogLogin(Frame owner, UtilisateurDAO dao) {
         super(owner, "🔐 Accès Sécurisé - " + Constantes.NOM_APP, true);
@@ -37,7 +42,7 @@ public class DialogLogin extends JDialog {
         // Panneau principal avec fond sombre
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBackground(new Color(0x24, 0x2B, 0x3E)); // Bleu très sombre comme l'image
-        mainPanel.setBorder(new EmptyBorder(40, 60, 40, 60));
+        mainPanel.setBorder(new EmptyBorder(25, 40, 25, 40));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -69,7 +74,7 @@ public class DialogLogin extends JDialog {
         lblSousTitre.setForeground(new Color(0xAA, 0xB2, 0xC0));
         lblSousTitre.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 40, 0);
+        gbc.insets = new Insets(0, 0, 20, 0); // Réduit
         mainPanel.add(lblSousTitre, gbc);
 
         // 4. Carte de connexion (le rectangle bleu foncé)
@@ -77,7 +82,7 @@ public class DialogLogin extends JDialog {
         card.setBackground(new Color(0x2E, 0x38, 0x4D)); // Légèrement plus clair que le fond
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(0x3E, 0x48, 0x5D), 1),
-                new EmptyBorder(30, 35, 30, 35)));
+                new EmptyBorder(25, 35, 25, 35))); // Réduit verticalement
 
         GridBagConstraints gbcCard = new GridBagConstraints();
         gbcCard.fill = GridBagConstraints.HORIZONTAL;
@@ -130,24 +135,18 @@ public class DialogLogin extends JDialog {
         gbcCard.insets = new Insets(0, 0, 20, 0);
         card.add(txtPass, gbcCard);
 
-        // Ligne Options (Checkbox + Link)
+        // Ligne Options (Checkbox uniquement)
         JPanel optionsPanel = new JPanel(new BorderLayout());
         optionsPanel.setOpaque(false);
 
-        JCheckBox chkRemember = new JCheckBox("Se souvenir de moi");
+        chkRemember = new JCheckBox("Se souvenir de moi");
         chkRemember.setForeground(new Color(0xAA, 0xB2, 0xC0));
         chkRemember.setOpaque(false);
         chkRemember.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         optionsPanel.add(chkRemember, BorderLayout.WEST);
 
-        JLabel lblForgot = new JLabel("Mot de passe oublié ?");
-        lblForgot.setForeground(new Color(0x34, 0x98, 0xDB));
-        lblForgot.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        lblForgot.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        optionsPanel.add(lblForgot, BorderLayout.EAST);
-
         gbcCard.gridy = 4;
-        gbcCard.insets = new Insets(0, 0, 30, 0);
+        gbcCard.insets = new Insets(0, 0, 20, 0); // Réduit
         card.add(optionsPanel, gbcCard);
 
         // Bouton Connexion
@@ -171,11 +170,11 @@ public class DialogLogin extends JDialog {
         btnLogin.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLogin.addActionListener(this::onLogin);
         gbcCard.gridy = 5;
-        gbcCard.insets = new Insets(0, 0, 10, 0);
+        gbcCard.insets = new Insets(0, 0, 5, 0); // Réduit
         card.add(btnLogin, gbcCard);
 
         gbc.gridy = 3;
-        gbc.insets = new Insets(0, 0, 40, 0);
+        gbc.insets = new Insets(0, 0, 25, 0); // Réduit
         mainPanel.add(card, gbc);
 
         // 5. Footer Copyright
@@ -185,14 +184,14 @@ public class DialogLogin extends JDialog {
         gbcFooter.gridx = 0;
 
         JLabel lblDevBy = new JLabel("© 2026 - Développé par WavOlution");
-        lblDevBy.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblDevBy.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblDevBy.setForeground(new Color(0x7F, 0x8C, 0x8D));
         lblDevBy.setHorizontalAlignment(SwingConstants.CENTER);
         gbcFooter.gridy = 0;
         footer.add(lblDevBy, gbcFooter);
 
-        JLabel lblReserved = new JLabel("Tous droits réservés");
-        lblReserved.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        JLabel lblReserved = new JLabel("Tous droits réservés. mon copirght.");
+        lblReserved.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblReserved.setForeground(new Color(0x7F, 0x8C, 0x8D));
         lblReserved.setHorizontalAlignment(SwingConstants.CENTER);
         gbcFooter.gridy = 1;
@@ -204,6 +203,16 @@ public class DialogLogin extends JDialog {
         mainPanel.add(footer, gbc);
 
         add(mainPanel, BorderLayout.CENTER);
+
+        // Charger préférences
+        Preferences prefs = Preferences.userNodeForPackage(DialogLogin.class);
+        boolean remember = prefs.getBoolean(PREF_REMEMBER, false);
+        chkRemember.setSelected(remember);
+        if (remember) {
+            txtLogin.setText(prefs.get(PREF_USER, ""));
+            txtPass.requestFocusInWindow();
+        }
+
         pack();
         setLocationRelativeTo(owner);
 
@@ -227,6 +236,15 @@ public class DialogLogin extends JDialog {
         dao.authentifier(login, pass, new UtilisateurDAO.AuthResult() {
             @Override
             public void onSuccess(String l, String r) {
+                // Sauvegarder préférences
+                Preferences prefs = Preferences.userNodeForPackage(DialogLogin.class);
+                prefs.putBoolean(PREF_REMEMBER, chkRemember.isSelected());
+                if (chkRemember.isSelected()) {
+                    prefs.put(PREF_USER, l);
+                } else {
+                    prefs.put(PREF_USER, "");
+                }
+
                 success = true;
                 userLogin = l;
                 userRole = r;

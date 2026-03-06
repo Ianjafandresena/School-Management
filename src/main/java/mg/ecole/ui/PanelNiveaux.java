@@ -36,8 +36,9 @@ public class PanelNiveaux extends JPanel {
         JPanel header = new JPanel(new BorderLayout(12, 0));
         header.setOpaque(false);
         header.setBorder(new EmptyBorder(0, 0, 16, 0));
-        JLabel lblTitre = UIFactory.labelTitre("📋 Niveaux Scolaires");
-        JButton btnAjouter = UIFactory.boutonPrincipal("+ Ajouter");
+        JLabel lblTitre = UIFactory.labelTitre("Niveaux Scolaires", "levels.svg");
+        JButton btnAjouter = UIFactory.boutonPrincipal("Ajouter");
+        btnAjouter.setIcon(UIFactory.icone("plus.svg", 16));
         btnAjouter.addActionListener(e -> dialogAjouter());
         header.add(lblTitre, BorderLayout.WEST);
         header.add(btnAjouter, BorderLayout.EAST);
@@ -52,9 +53,10 @@ public class PanelNiveaux extends JPanel {
         txtRecherche.setToolTipText("Rechercher par code ou libellé");
         txtRecherche.addActionListener(e -> rechercher());
         barreRecherche.add(txtRecherche);
-        JButton btnRecherche = UIFactory.boutonSecondaire("🔍 Rechercher");
-        btnRecherche.addActionListener(e -> rechercher());
-        JButton btnReset = UIFactory.boutonSecondaire("↺ Réinitialiser");
+        JButton btnRecherche = UIFactory.boutonPrincipal("Rechercher");
+        btnRecherche.setIcon(UIFactory.icone("search.svg", 16));
+        JButton btnReset = UIFactory.boutonSecondaire("");
+        btnReset.setIcon(UIFactory.icone("refresh.svg", 16));
         btnReset.addActionListener(e -> {
             txtRecherche.setText("");
             rafraichir();
@@ -92,8 +94,10 @@ public class PanelNiveaux extends JPanel {
         // ── Barre des boutons bas ─────────────────────────────────────────────
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
         btnPanel.setOpaque(false);
-        JButton btnModifier = UIFactory.boutonSecondaire("✏ Modifier");
-        JButton btnSupprimer = UIFactory.boutonDanger("🗑 Supprimer");
+        JButton btnModifier = UIFactory.boutonSecondaire("Modifier");
+        btnModifier.setIcon(UIFactory.icone("edit.svg", 16));
+        JButton btnSupprimer = UIFactory.boutonDanger("Supprimer");
+        btnSupprimer.setIcon(UIFactory.icone("delete.svg", 16));
         btnModifier.addActionListener(e -> modifierSelectionne());
         btnSupprimer.addActionListener(e -> supprimerSelectionne());
         btnPanel.add(btnModifier);
@@ -208,10 +212,15 @@ public class PanelNiveaux extends JPanel {
                 n.setLibelle(libelle);
                 n.setOrdre((Integer) spnOrdre.getValue());
                 n.setDescription(txtDesc.getText().trim());
-                if (isEdit)
+                if (isEdit) {
                     niveauDAO.modifier(n);
-                else
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "MODIF NIVEAU",
+                            "Mise à jour du niveau " + n.getCode());
+                } else {
                     niveauDAO.ajouter(n);
+                    mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "NOUVEAU NIVEAU",
+                            "Création du niveau " + n.getCode());
+                }
                 rafraichir();
                 dialog.dispose();
                 JOptionPane.showMessageDialog(mainFrame, "Niveau " + (isEdit ? "modifié" : "ajouté") + " avec succès.",
@@ -239,6 +248,8 @@ public class PanelNiveaux extends JPanel {
         if (rep == JOptionPane.YES_OPTION) {
             try {
                 niveauDAO.supprimer(n.getId());
+                mainFrame.getJournalDAO().log(mainFrame.getCurrentUser(), "SUPPR NIVEAU",
+                        "Suppression du niveau " + n.getCode());
                 rafraichir();
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(this, "Impossible de supprimer : " + e.getMessage(), "Erreur",
